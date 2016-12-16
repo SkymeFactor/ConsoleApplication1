@@ -28,10 +28,7 @@ bool cmp(pair <int, double> a, pair <int, double> b) {
 void debugv(vector<int> v) {
 	for (int i = 0; i < 16; i++) {
 		for (int j = 0; j < 8; j++) {
-			fout.width(3);
-			fout << right << j * 16 + i + 1 << ":";
-			fout.width(3);
-			fout << v[j * 16 + i] << " | ";
+			fout << setw(3) << right << j * 16 + i + 1 << ":" << setw(3) << v[j * 16 + i] << " | ";
 		}
 		fout << "\n";
 	}
@@ -190,7 +187,7 @@ int main() {
 	fout << "\n\n";
 
 	//преобразование словаря в вектор
-	fout << "Сортированный по невозрастанию частоты встречаемости первичного алфавита:\n";
+	fout << "Сортированный по невозрастанию частоты встречаемости первичный алфавит:\n";
 	for (auto it : mapFreq)
 		vecFreq.push_back(make_pair(it.first, it.second));
 	sort(vecFreq.begin(), vecFreq.end(), cmp); //сортируем по невозрастаемости частоты встречаемости
