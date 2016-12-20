@@ -3,7 +3,7 @@
 #include <iomanip>
 //#include <cstdio>
 #include "MyBMPLoader.h"
-#include "Source.h"
+//#include "Source.h"
 #include <vector>
 #include <map>
 //#include <Windows.h>
@@ -14,18 +14,15 @@
 
 using namespace std;
 
-char name[1000] = "image.bmp";
+char name[] = "image.bmp";
 std::ofstream fout("output.txt");
 map <int, int> mapCount; //кол-во встречаемости символа
 map <int, double> mapFreq; //словарь из символов первичного алфавита и частот встречаемости
 vector<pair<int, double>> vecFreq; // массив пар символ - встречаемость
 
-//компоратор для сортировки пар символ-частота
-bool cmp(pair <int, double> a, pair <int, double> b) {
-	return a.second == b.second ? a.first < b.first : a.second > b.second;
-}
+
 //функция для отладки массива c пикселями 
-void debugv(vector<int> v) {
+void print_v(vector<int> v) {
 	for (int i = 0; i < 16; i++) {
 		for (int j = 0; j < 8; j++) {
 			fout << setw(3) << right << j * 16 + i + 1 << ":" << setw(3) << v[j * 16 + i] << " | ";
@@ -33,6 +30,10 @@ void debugv(vector<int> v) {
 		fout << "\n";
 	}
 	fout << "\n";
+}
+//компоратор для сортировки пар символ-частота
+bool comp(pair <int, double> m, pair <int, double> n) {
+	return m.second == n.second ? m.first < n.first : m.second > n.second;
 }
 //функция для перевода вектора в строку
 char* str(vector<int> v) {
@@ -130,6 +131,7 @@ int Huf() {
 		hf.push_back(newPoint);
 	}
 }
+
 vector<pair<vector<int>, int>> vecHuf; //вектор с кодами
 map<int, vector<int>> mapHuf; //словарь с кодами
 vector<int> now;
@@ -154,10 +156,7 @@ void resHuf(int num) {
 
 int main() {
 	setlocale(LC_ALL, "Russian");
-	//SetConsoleOutputCP(1252); // установка кодовой страницы win-cp 1251 в поток вывода (кириллица)
 	
-	//freopen("output.txt", "w", stdout);
-
 	cout << "Reading the image...........";
 	vector<vector<int>> arr = imageLoad(name); // двумерный массив значений цветов
 	vector<int> v(128); // массив из значений на диагонали (большее кол-во разных значений цветов)
@@ -167,42 +166,42 @@ int main() {
 	for (int i = 0; i < 128; i++)
 		v[i] = arr[i][2] * 0.299 + arr[i][1] * 0.587 + arr[i][0] * 0.114;
 	fout << "Исходное сообщение:\n";
-	debugv(v);
+	print_v(v);
 	cout << "Done\n\n";
 	cout << "Data quantization...........";
 	for (int i = 0; i < 128; i++) {
-		//квантуем по определённому правилу
+		//квантуем по правилу X = round(X / 20) * 20
 		v[i] = (v[i] / 20) * 20;
-		//заполняем словарь 
+		//заполняем словарь
 		mapFreq[v[i]] += 1.0 / 128;
 	}
 	fout << "Результат квантования:\n";
-	debugv(v);
+	print_v(v);
 	cout << "Done\n\n";
 	cout << "Data sorting................";
-	//вывод значний словаря
 	fout << "Первичный алфавит:\n";
-	for (auto it : mapFreq) 
+	//вывод значний словаря
+	for each (auto it in mapFreq)
 		fout << setw(3) << it.first << ':' << fixed << it.second << '|';
 	fout << "\n\n";
 
-	//преобразование словаря в вектор
 	fout << "Сортированный по невозрастанию частоты встречаемости первичный алфавит:\n";
-	for (auto it : mapFreq)
+	//преобразование словаря в вектор
+	for each (auto it in mapFreq)
 		vecFreq.push_back(make_pair(it.first, it.second));
-	sort(vecFreq.begin(), vecFreq.end(), cmp); //сортируем по невозрастаемости частоты встречаемости
-	for (auto it : vecFreq) 
+	sort(vecFreq.begin(), vecFreq.end(), comp); //сортируем по невозрастанию частоты встречаемости
+	for each(auto it in vecFreq)
 		fout << setw(3) << it.first << ": " << fixed << it.second << '\n';
 	cout << "Done\n\n";
-	cout << "Binary code building........";
-	//средняя длина двоичного кода
-	fout << "\nСредняя длина двоичного кода: ";
-	double averageLen = 0;
-	for (auto it : vecFreq)
-		averageLen += -it.second * log2(it.second);
-	fout << fixed << averageLen << "\n\n";
+	//энтропия двоичного кода
+	fout << "\nЭнтропия кода: ";
+	double avgLen = 0;
+	for each(auto it in vecFreq)
+		avgLen += -it.second * log2(it.second);
+	fout << fixed << avgLen << "\n\n";
 
 	//двоичный равномерный односимвольный код
+	cout << "Binary code building........";
 	fout << "Двоичный равномерный односимвольный код:\n";
 	int k = 1;
 	int st = 0; //2^st - первое число >= frequency.size() 
@@ -262,8 +261,8 @@ int main() {
 	cout << "Done\n\n";
 	cout << "Other calculations..........";
 	//сообщения закодированные разными видами кодировки
-	fout << "Минимальная длина двоичного кода для одного символа: " << averageLen << '\n';
-	fout << "Длина сообщения для минимального двоичного кода: " << averageLen * 128 << '\n';
+	fout << "Минимальная длина двоичного кода для одного символа: " << avgLen << '\n';
+	fout << "Длина сообщения для минимального двоичного кода: " << avgLen * 128 << '\n';
 
 	fout << "\nРавномерный код:\n";
 	int countUni = 0;
@@ -275,7 +274,7 @@ int main() {
 		
 	}
 	fout << "\n\nКол-во символов: " << countUni << "\nСредняя длина кода: " << fixed << countUni / 128.0
-		 << "\nИзбыточность кода: " << countUni / 128.0 / averageLen << '\n';
+		 << "\nИзбыточность кода: " << countUni / 128.0 / avgLen << '\n';
 
 	fout << "\nКод Хаффмана:\n";
 	int countHuf = 0;
@@ -286,7 +285,7 @@ int main() {
 		countHuf += mapHuf[v[i]].size();
 	}
 	fout << "\n\nКол-во символов: "<< countHuf << "\nСредняя длина кода: "<< fixed << countHuf / 128.0
-		 <<"\nИзбыточность кода: " << countHuf / 128.0 / averageLen << '\n';
+		 <<"\nИзбыточность кода: " << countHuf / 128.0 / avgLen << '\n';
 
 
 	fout << "\nКод Шеннона-Фано\n";
@@ -298,10 +297,11 @@ int main() {
 		countShen += mapShen[v[i]].size();
 	}
 	fout << "\n\nКол-во символов: "<< countShen <<"\nСредняя длина кода: "<< fixed << countShen / 128.0
-		 <<"\nИзбыточность кода: "<< countShen / 128.0 / averageLen << '\n';
+		 <<"\nИзбыточность кода: "<< countShen / 128.0 / avgLen << '\n';
 	cout << "Done\n\n\n\n";
 	fout.close();
 	cout << "The task successfully completed\n\n";
 
 	system("PAUSE>>VOID");
+	return 0;
 }
